@@ -102,8 +102,8 @@ class HFM(object):
                     mean_squared_error(self.e4_eqns_pred, 0.0)
         
         # optimizers
-        self.learning_rate = tf.placeholder(tf.float32, shape=[], name='learning_rate')
-        self.optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate)
+        self.learning_rate = tf.placeholder(tf.float32, shape=[])
+        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate = self.learning_rate)
         self.train_op = self.optimizer.minimize(self.loss)
         
         self.sess = tf_session()
@@ -156,30 +156,22 @@ class HFM(object):
             if it % 100 == 0:
                 elapsed = time.time() - start_time
                 running_time += elapsed / 3600.0
-                
-                [beta1, beta2, lr0] = self.sess.run([self.optimizer._get_beta_accumulators()[0],self.optimizer._get_beta_accumulators()[1],
-                    self.optimizer._lr], tf_dict)
-                # print(beta1, beta2, lr0)
-                lr_t = lr0 * (1 - beta2) ** 0.5 / (1 - beta1)
-                # lr_t = tf.to_float(lr_t)
-                # print('---------------------------------------')
-                # print(lr_t)
-                # print("eval =", self.sess.run(self.optimizer._get_beta_accumulators()))
-
                 [loss_value,
                  learning_rate_value] = self.sess.run([self.loss,
                                                        self.learning_rate], tf_dict)
-                print('It: %d, Loss: %.3e, Time: %.2fs, Running Time: %.2fh, Learning Rate: %.3e'
-                      % (it, loss_value, elapsed, running_time, lr_t))
+                print('It: %d, Loss: %.3e, Time: %.2fs, Running Time: %.2fh, Learning Rate: %.1e'
+                      % (it, loss_value, elapsed, running_time, learning_rate_value))
                 sys.stdout.flush()
                 start_time = time.time()
-                f = open("/public/home/lcc-dx07/HFM-master/Results/train_Adam_loss.txt", "a")  # 记录loss
-                f.write("It: {}\t".format(it))
-                f.write("learning_rate: {:.3e}\t".format(lr_t))
-                f.write("Loss: {:.3e}\n".format(loss_value))
+                f = open("/public/home/lcc-dx07/HFM-master/Results/train_loss_SGD.txt", "a")  # 记录loss
+                f.write("It: {:d}\t".format(it))
+                f.write("Loss: {:.3e}\t".format(loss_value))
+                f.write("Time: {:.2f}s\t".format(elapsed))
+                f.write("Running Time: {:.2f}h\t".format(running_time))
+                f.write("Learning Rate: {:.1e}\n".format(learning_rate_value))
 
-            # if running_time % 5 == 0:
-            if it % 20000 == 0:
+            if running_time % 20000 == 0:
+
                 F_D, F_L = model.predict_drag_lift(t_star)
 
                 C_pred = 0 * C_star
@@ -210,16 +202,15 @@ class HFM(object):
                     error_v = relative_error(v_pred, v_test)
                     error_p = relative_error(p_pred - np.mean(p_pred), p_test - np.mean(p_test))
 
-                    f = open("/public/home/lcc-dx07/HFM-master/Results/error_Adam.txt", "a")  # 存error
+                    f = open("/public/home/lcc-dx07/HFM-master/Results/error_SGD.txt", "a")  # 存error
 
-                    f.write("snap: {}\t".format(snap))
-                    f.write("error_c: {:.3e}\t".format(error_c))
-                    f.write("error_u: {:.3e}\t".format(error_u))
-                    f.write("error_v: {:.3e}\t".format(error_v))
+                    f.write("snap: {} ".format(snap))
+                    f.write("error_c: {:.3e} ".format(error_c))
+                    f.write("error_u: {:.3e} ".format(error_u))
+                    f.write("error_v: {:.3e} ".format(error_v))
                     f.write("error_p: {:.3e}\n".format(error_p))
-
                 scipy.io.savemat(
-                    '/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_Adam_results_%s.mat' % (time.strftime('%d_%m_%Y')),
+                    '/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_results_%s.mat' % (time.strftime('%d_%m_%Y')),
                     {'C_pred': C_pred, 'U_pred': U_pred, 'V_pred': V_pred, 'P_pred': P_pred, 'F_L': F_L, 'F_D': F_D})
             it += 1
 
@@ -420,7 +411,7 @@ if __name__ == "__main__":
         # print('Error v: %e' % (error_v))
         # print('Error p: %e' % (error_p))
 
-        f = open("/public/home/lcc-dx07/HFM-master/Results/error_Adam.txt", "a")  # 存error
+        f = open("/public/home/lcc-dx07/HFM-master/Results/error_SGD.txt", "a")  # 存error
 
         f.write("snap: {}\t".format(snap))
         f.write("error_c: {:.3e}\t".format(error_c))
@@ -428,5 +419,5 @@ if __name__ == "__main__":
         f.write("error_v: {:.3e}\t".format(error_v))
         f.write("error_p: {:.3e}\n".format(error_p))
 
-    scipy.io.savemat('/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_Adam_results_%s.mat' %(time.strftime('%d_%m_%Y')),
+    scipy.io.savemat('/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_results_%s.mat' %(time.strftime('%d_%m_%Y')),
                      {'C_pred':C_pred, 'U_pred':U_pred, 'V_pred':V_pred, 'P_pred':P_pred, 'F_L':F_L, 'F_D':F_D})
