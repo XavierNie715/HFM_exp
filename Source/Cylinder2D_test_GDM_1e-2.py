@@ -114,9 +114,10 @@ class HFM(object):
         N_eqns = self.t_eqns.shape[0]
         
         start_time = time.time()
+        begin_time = time.time()
         running_time = 0
         it = 0
-        while running_time < total_time:
+        while (time.time()-begin_time)/3600 < total_time:
             
             idx_data = np.random.choice(N_data, min(self.batch_size, N_data))
             idx_eqns = np.random.choice(N_eqns, self.batch_size)
@@ -160,19 +161,17 @@ class HFM(object):
                  learning_rate_value] = self.sess.run([self.loss,
                                                        self.learning_rate], tf_dict)
                 print('It: %d, Loss: %.3e, Time: %.2fs, Running Time: %.2fh, Learning Rate: %.1e'
-                      % (it, loss_value, elapsed, running_time, learning_rate_value))
+                      % (it, loss_value, elapsed, (time.time()-begin_time)/3600, learning_rate_value))
                 sys.stdout.flush()
                 start_time = time.time()
-                f = open("/public/home/lcc-dx07/HFM-master/Results/train_loss_GDwithM.txt", "a")  # 记录loss
-                f.write("It: {:d} ".format(it))
-                f.write("Loss: {:.3e} ".format(loss_value))
-                f.write("Time: {:.2f}s ".format(elapsed))
-                f.write("Running Time: {:.2f}h ".format(learning_rate_value))
+                f = open("/public/home/lcc-dx07/HFM-master/Results/train_loss_GDwithM_1e-2.txt", "a")  # 记录loss
+                f.write("It: {:d}\t".format(it))
+                f.write("Loss: {:.3e}\t".format(loss_value))
+                f.write("Time: {:.2f}s\t".format(elapsed))
+                f.write("Running Time: {:.2f}h\t".format((time.time()-begin_time)/3600))
                 f.write("Learning Rate: {:.1e}\n".format(learning_rate_value))
 
-            if running_time % 20000 == 0:
-
-                print(running_time,"save")
+            if ((time.time()-begin_time)/3600) % 5 == 0:
 
                 F_D, F_L = model.predict_drag_lift(t_star)
 
@@ -204,7 +203,7 @@ class HFM(object):
                     error_v = relative_error(v_pred, v_test)
                     error_p = relative_error(p_pred - np.mean(p_pred), p_test - np.mean(p_test))
 
-                    f = open("/public/home/lcc-dx07/HFM-master/Results/error_GDwithM.txt", "a")  # 存error
+                    f = open("/public/home/lcc-dx07/HFM-master/Results/error_GDwithM_1e-2.txt", "a")  # 存error
 
                     f.write("snap: {}\t".format(snap))
                     f.write("error_c: {:.3e}\t".format(error_c))
@@ -212,7 +211,7 @@ class HFM(object):
                     f.write("error_v: {:.3e}\t".format(error_v))
                     f.write("error_p: {:.3e}\n".format(error_p))
                 scipy.io.savemat(
-                    '/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_results_%s.mat' % (time.strftime('%d_%m_%Y')),
+                    '/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_GDM_1e-2_results_%s.mat' % (time.strftime('%d_%m_%Y')),
                     {'C_pred': C_pred, 'U_pred': U_pred, 'V_pred': V_pred, 'P_pred': P_pred, 'F_L': F_L, 'F_D': F_D})
             it += 1
 
@@ -349,7 +348,7 @@ if __name__ == "__main__":
                 layers, batch_size,
                 Pec = 100, Rey = 100)
     
-    model.train(total_time = 24, learning_rate=1e-3)
+    model.train(total_time = 24, learning_rate=1e-2)
 
     F_D, F_L = model.predict_drag_lift(t_star)
     
@@ -413,7 +412,7 @@ if __name__ == "__main__":
         # print('Error v: %e' % (error_v))
         # print('Error p: %e' % (error_p))
 
-        f = open("/public/home/lcc-dx07/HFM-master/Results/error_GDwithM.txt", "a")  # 存error
+        f = open("/public/home/lcc-dx07/HFM-master/Results/error_GDwithM_1e-2.txt", "a")  # 存error
 
         f.write("snap: {}\t".format(snap))
         f.write("error_c: {:.3e}\t".format(error_c))
@@ -421,5 +420,5 @@ if __name__ == "__main__":
         f.write("error_v: {:.3e}\t".format(error_v))
         f.write("error_p: {:.3e}\n".format(error_p))
 
-    scipy.io.savemat('/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_results_%s.mat' %(time.strftime('%d_%m_%Y')),
+    scipy.io.savemat('/public/home/lcc-dx07/HFM-master/Results/Cylinder2D_GDM_1e-2_results_%s.mat' %(time.strftime('%d_%m_%Y')),
                      {'C_pred':C_pred, 'U_pred':U_pred, 'V_pred':V_pred, 'P_pred':P_pred, 'F_L':F_L, 'F_D':F_D})
