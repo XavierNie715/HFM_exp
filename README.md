@@ -1,3 +1,10 @@
+# Description
+
+This work is originally proposed by Maziarraissi, please refer to the information below to get the details.
+
+Here the optimizer is changed to study influence of different optimizers.
+
+
 [![DOI](https://zenodo.org/badge/152933799.svg)](https://zenodo.org/badge/latestdoi/152933799)
 
 # [Hidden Fluid Mechanics](https://maziarraissi.github.io/HFM/)
